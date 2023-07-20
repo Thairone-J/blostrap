@@ -1,10 +1,15 @@
 class ArticlesController < ApplicationController
-
-before_action :set_article, only: %i[ edit destroy show update]
+  before_action :set_article, only: %i[ edit destroy show update ]
 
   def index
+    @highlights = Article.desc_order.first(3)
+
     current_page = (params[:page] || 1).to_i
-    @articles = Article.order(created_at: :desc).page(current_page).per(2)
+    highlight_ids = @highlights.pluck(:id).join(',')
+
+    @articles = Article.without_highlights(highlight_ids)
+                      .desc_order
+                      .page(current_page)
   end
 
   def show
@@ -28,14 +33,12 @@ before_action :set_article, only: %i[ edit destroy show update]
   end
 
   def update
-
     if @article.update(article_params)
       redirect_to @article
     else
       render :edit
     end
   end
-
 
   def destroy
     @article.destroy
